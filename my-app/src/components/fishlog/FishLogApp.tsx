@@ -9,12 +9,13 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import AddCatchScreen from '@/screens/fishlog/AddCatchScreen';
 import AuthScreen from '@/screens/fishlog/AuthScreen';
 import CatchDetailScreen from '@/screens/fishlog/CatchDetailScreen';
+import ProfileScreen from '@/screens/fishlog/ProfileScreen';
 import SocialScreen from '@/screens/fishlog/SocialScreen';
 import StatsScreen from '@/screens/fishlog/StatsScreen';
 import { useFishlogStore } from '@/store/useFishlogStore';
 import { COLORS, STATUS_LABELS } from '@/utils/fishlog-constants';
 
-type Screen = 'list' | 'add' | 'edit' | 'detail' | 'stats' | 'social';
+type Screen = 'list' | 'add' | 'edit' | 'detail' | 'stats' | 'social' | 'profile';
 
 export default function FishLogApp() {
   if (!isSupabaseConfigured) {
@@ -151,10 +152,18 @@ export default function FishLogApp() {
         <TabButton active={screen === 'list'} label="Połowy" onPress={() => setScreen('list')} />
         <TabButton active={screen === 'stats'} label="Statystyki" onPress={() => setScreen('stats')} />
         <TabButton active={screen === 'social'} label="Społeczność" onPress={() => setScreen('social')} />
+        <TabButton active={screen === 'profile'} label="Profil" onPress={() => setScreen('profile')} />
       </View>
 
       {screen === 'stats' && <StatsScreen catches={catches} />}
-      {screen === 'social' && <SocialScreen currentUserId={currentUser.id} currentUsername={currentUsername} onBack={() => setScreen('list')} />}
+      {screen === 'social' && <SocialScreen currentUserId={currentUser.id} currentUsername={currentUsername} />}
+      {screen === 'profile' && (
+        <ProfileScreen
+          currentUserId={currentUser.id}
+          currentUsername={currentUsername}
+          onUsernameChange={setCurrentUsername}
+        />
+      )}
 
       {screen === 'list' && (
         <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
