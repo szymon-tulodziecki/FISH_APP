@@ -61,6 +61,7 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
   const [profileUser, setProfileUser] = useState<Profile | null>(null);
   const [profileCatches, setProfileCatches] = useState<CatchRecord[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileBackTo, setProfileBackTo] = useState<ViewMode>('feed');
 
   useEffect(() => {
     loadFollowedIds().then(() => loadFeed());
@@ -239,8 +240,9 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
 
   // ── Open user profile ─────────────────────────────────────────────────────────
 
-  const openUserProfile = async (profile: Profile) => {
+  const openUserProfile = async (profile: Profile, backTo: ViewMode = 'search') => {
     setProfileUser(profile);
+    setProfileBackTo(backTo);
     setView('userProfile');
     setLoadingProfile(true);
     const { data } = await supabase.from('catches').select('*')
@@ -259,9 +261,11 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
     return (
       <View style={styles.container}>
         <View style={styles.subHeader}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => setView('search')} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => setView(profileBackTo)} activeOpacity={0.7}>
             <Icon.ArrowLeft size={16} color="rgba(255,255,255,0.8)" />
-            <Text style={styles.backBtnText}>Szukaj</Text>
+            <Text style={styles.backBtnText}>
+              {profileBackTo === 'feed' ? 'Tablica' : profileBackTo === 'following' ? 'Obserwowani' : 'Szukaj'}
+            </Text>
           </TouchableOpacity>
           <View style={styles.profileHeaderRow}>
             <View style={styles.avatarLarge}>
@@ -331,7 +335,11 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
                 <KeyboardAvoidingView key={post.id} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                   <View style={styles.card}>
                     {/* Author row */}
-                    <View style={styles.authorRow}>
+                    <TouchableOpacity
+                      style={styles.authorRow}
+                      onPress={() => openUserProfile({ id: post.user_id, username: post.author_username }, 'feed')}
+                      activeOpacity={0.7}
+                    >
                       <View style={styles.authorAvatar}>
                         <Text style={styles.authorAvatarLetter}>{avatarLetter(post.author_username)}</Text>
                       </View>
@@ -339,7 +347,8 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
                         <Text style={styles.authorName}>{post.author_username}</Text>
                         <Text style={styles.postDate}>{formatDate(post.caught_at)}</Text>
                       </View>
-                    </View>
+                      <Icon.ChevronRight size={14} color={COLORS.textTertiary} />
+                    </TouchableOpacity>
 
                     {!!post.photo_url && (
                       <Image source={{ uri: post.photo_url }} style={styles.cardPhoto} resizeMode="cover" />
@@ -451,7 +460,7 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
             following.map((r) => (
               <View key={r.following_id} style={styles.card}>
                 <View style={styles.userRow}>
-                  <TouchableOpacity style={styles.userInfo} onPress={() => openUserProfile(r.profiles)} activeOpacity={0.7}>
+                  <TouchableOpacity style={styles.userInfo} onPress={() => openUserProfile(r.profiles, 'following')} activeOpacity={0.7}>
                     <View style={styles.avatar}>
                       <Text style={styles.avatarLetter}>{avatarLetter(r.profiles?.username ?? '?')}</Text>
                     </View>
