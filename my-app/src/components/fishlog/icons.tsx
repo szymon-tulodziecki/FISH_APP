@@ -26,4 +26,9 @@ export const Icon = {
   Camera: ({ size = 16, color = '#000' }: IconProps) => <Feather name="camera" size={size} color={color} />,
   Trophy: ({ size = 16, color = '#000' }: IconProps) => <MaterialCommunityIcons name="trophy-outline" size={size} color={color} />,
   Note: ({ size = 16, color = '#000' }: IconProps) => <Feather name="file-text" size={size} color={color} />,
+  Heart: ({ filled = false, size = 16, color = '#000' }: { filled?: boolean; size?: number; color?: string }) => (
+    <MaterialCommunityIcons name={filled ? 'heart' : 'heart-outline'} size={size} color={color} />
+  ),
+  MessageCircle: ({ size = 16, color = '#000' }: IconProps) => <Feather name="message-circle" size={size} color={color} />,
+  Send: ({ size = 16, color = '#000' }: IconProps) => <Feather name="send" size={size} color={color} />,
 };

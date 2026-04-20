@@ -38,12 +38,24 @@ export default function FishLogApp() {
   const [loading, setLoading] = useState(true);
   const [editItem, setEditItem] = useState<CatchRecord | null>(null);
   const [detailItem, setDetailItem] = useState<CatchRecord | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string>('');
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setCurrentUser(session?.user ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => setCurrentUser(session?.user ?? null));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+      if (session?.user) loadUsername(session.user.id);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setCurrentUser(session?.user ?? null);
+      if (session?.user) loadUsername(session.user.id);
+    });
     return () => subscription.unsubscribe();
   }, [setCurrentUser]);
+
+  const loadUsername = async (uid: string) => {
+    const { data } = await supabase.from('profiles').select('username').eq('id', uid).single();
+    if (data) setCurrentUsername((data as any).username ?? '');
+  };
 
   const fetchCatches = useCallback(async () => {
     if (!currentUser) return;
@@ -142,7 +154,7 @@ export default function FishLogApp() {
       </View>
 
       {screen === 'stats' && <StatsScreen catches={catches} />}
-      {screen === 'social' && <SocialScreen currentUserId={currentUser.id} onBack={() => setScreen('list')} />}
+      {screen === 'social' && <SocialScreen currentUserId={currentUser.id} currentUsername={currentUsername} onBack={() => setScreen('list')} />}
 
       {screen === 'list' && (
         <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
