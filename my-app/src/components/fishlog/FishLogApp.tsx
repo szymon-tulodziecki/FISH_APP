@@ -105,8 +105,6 @@ export default function FishLogApp() {
     );
   }
 
-  if (screen === 'stats') return <StatsScreen catches={catches} onBack={() => setScreen('list')} />;
-  if (screen === 'social') return <SocialScreen currentUserId={currentUser.id} />;
 
   const thisYear = new Date().getFullYear();
   const caughtThisYear = catches.filter(
@@ -125,10 +123,12 @@ export default function FishLogApp() {
           </View>
         </View>
         <View style={styles.topActions}>
-          <Pressable style={styles.addButton} onPress={() => setScreen('add')}>
-            <Icon.Plus size={14} color="#fff" />
-            <Text style={styles.addButtonText}>Nowy</Text>
-          </Pressable>
+          {screen === 'list' && (
+            <Pressable style={styles.addButton} onPress={() => setScreen('add')}>
+              <Icon.Plus size={14} color="#fff" />
+              <Text style={styles.addButtonText}>Nowy</Text>
+            </Pressable>
+          )}
           <Pressable style={styles.logoutButton} onPress={handleLogout}>
             <Icon.LogOut size={14} color="rgba(255,255,255,0.75)" />
           </Pressable>
@@ -141,60 +141,65 @@ export default function FishLogApp() {
         <TabButton active={screen === 'social'} label="Społeczność" onPress={() => setScreen('social')} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: COLORS.brandMid }]}>
-            <Text style={styles.statValue}>{caughtThisYear}</Text>
-            <Text style={styles.statLabel}>W {thisYear} roku</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: COLORS.brandDark }]}>
-            <Text style={styles.statValue}>{caughtTotal}</Text>
-            <Text style={styles.statLabel}>Łącznie złowionych</Text>
-          </View>
-        </View>
+      {screen === 'stats' && <StatsScreen catches={catches} />}
+      {screen === 'social' && <SocialScreen currentUserId={currentUser.id} onBack={() => setScreen('list')} />}
 
-        <View style={styles.searchWrap}>
-          <Icon.Search size={14} color={COLORS.textTertiary} />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Szukaj po gatunku lub łowisku..."
-            placeholderTextColor={COLORS.textTertiary}
-            style={styles.search}
-          />
-        </View>
-
-        <View style={styles.sortRow}>
-          <Text style={styles.sortLabel}>Sortuj:</Text>
-          <SortChip active={sortBy === 'date_added'} label="Najnowsze" onPress={() => setSortBy('date_added')} />
-          <SortChip active={sortBy === 'weight'} label="Masa" onPress={() => setSortBy('weight')} />
-        </View>
-
-        <Text style={styles.counter}>{filtered.length} {filtered.length === 1 ? 'wpis' : 'wpisów'}</Text>
-
-        {loading ? (
-          <ActivityIndicator color={COLORS.brandMid} size="large" style={{ marginTop: 32 }} />
-        ) : filtered.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Icon.Fish size={40} color={COLORS.borderSecondary} />
-            <Text style={styles.emptyTitle}>Brak połowów</Text>
-            <Text style={styles.emptyText}>Dodaj swój pierwszy połów!</Text>
+      {screen === 'list' && (
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, { backgroundColor: COLORS.brandMid }]}>
+              <Text style={styles.statValue}>{caughtThisYear}</Text>
+              <Text style={styles.statLabel}>W {thisYear} roku</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: COLORS.brandDark }]}>
+              <Text style={styles.statValue}>{caughtTotal}</Text>
+              <Text style={styles.statLabel}>Łącznie złowionych</Text>
+            </View>
           </View>
-        ) : (
-          <View style={styles.list}>
-            {filtered.map((item) => (
-              <CatchCard
-                key={item.id}
-                item={item}
-                catches={catches}
-                onPress={() => { setDetailItem(item); setScreen('detail'); }}
-                onEdit={() => { setEditItem(item); setScreen('edit'); }}
-                onDelete={() => deleteCatch(item.id)}
-              />
-            ))}
+
+          <View style={styles.searchWrap}>
+            <Icon.Search size={14} color={COLORS.textTertiary} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Szukaj po gatunku lub łowisku..."
+              placeholderTextColor={COLORS.textTertiary}
+              style={styles.search}
+            />
           </View>
-        )}
-      </ScrollView>
+
+          <View style={styles.sortRow}>
+            <Text style={styles.sortLabel}>Sortuj:</Text>
+            <SortChip active={sortBy === 'date_added'} label="Najnowsze" onPress={() => setSortBy('date_added')} />
+            <SortChip active={sortBy === 'weight'} label="Masa" onPress={() => setSortBy('weight')} />
+          </View>
+
+          <Text style={styles.counter}>{filtered.length} {filtered.length === 1 ? 'wpis' : 'wpisów'}</Text>
+
+          {loading ? (
+            <ActivityIndicator color={COLORS.brandMid} size="large" style={{ marginTop: 32 }} />
+          ) : filtered.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Icon.Fish size={40} color={COLORS.borderSecondary} />
+              <Text style={styles.emptyTitle}>Brak połowów</Text>
+              <Text style={styles.emptyText}>Dodaj swój pierwszy połów!</Text>
+            </View>
+          ) : (
+            <View style={styles.list}>
+              {filtered.map((item) => (
+                <CatchCard
+                  key={item.id}
+                  item={item}
+                  catches={catches}
+                  onPress={() => { setDetailItem(item); setScreen('detail'); }}
+                  onEdit={() => { setEditItem(item); setScreen('edit'); }}
+                  onDelete={() => deleteCatch(item.id)}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }

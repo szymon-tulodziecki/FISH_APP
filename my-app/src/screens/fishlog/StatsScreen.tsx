@@ -1,16 +1,14 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/fishlog/icons';
 import { StarRating } from '@/components/fishlog/StarRating';
 import { CatchRecord } from '@/components/fishlog/types';
 import { COLORS, formatDate } from '@/utils/fishlog-constants';
 
-type Props = { catches: CatchRecord[]; onBack: () => void };
+type Props = { catches: CatchRecord[] };
 
-export default function StatsScreen({ catches, onBack }: Props) {
-  const insets = useSafeAreaInsets();
+export default function StatsScreen({ catches }: Props) {
   const thisYear = new Date().getFullYear();
   const caught = catches.filter((c) => c.status === 'caught');
   const caughtThisYear = caught.filter((c) => c.caught_at && new Date(c.caught_at).getFullYear() === thisYear);
@@ -34,17 +32,6 @@ export default function StatsScreen({ catches, onBack }: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Pressable style={styles.backBtn} onPress={onBack}>
-          <Icon.ArrowLeft size={16} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.backBtnText}>Połowy</Text>
-        </Pressable>
-        <View style={styles.headerTitleRow}>
-          <Icon.BarChart size={18} color="#fff" />
-          <Text style={styles.headerTitle}>Statystyki</Text>
-        </View>
-      </View>
-
       <View style={styles.grid}>
         <StatCard label="Łącznie złowione" value={String(caught.length)} />
         <StatCard label={`W ${thisYear} roku`} value={String(caughtThisYear.length)} />
@@ -140,18 +127,8 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F4F2EB' },
-  content: { gap: 12, paddingBottom: 32 },
-  header: {
-    backgroundColor: COLORS.brandDark,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 6,
-  },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
-  backBtnText: { color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '600' },
-  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, paddingTop: 4 },
+  content: { gap: 12, paddingBottom: 32, paddingTop: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16 },
   statCard: {
     flex: 1,
     minWidth: '44%',

@@ -9,7 +9,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/fishlog/icons';
 import { StarRating } from '@/components/fishlog/StarRating';
@@ -19,12 +18,11 @@ import { COLORS, formatDate } from '@/utils/fishlog-constants';
 
 type Profile = { id: string; username: string };
 type FollowRow = { following_id: string; profiles: Profile };
-type Props = { currentUserId: string };
+type Props = { currentUserId: string; onBack: () => void };
 
 type View_ = 'feed' | 'search' | 'profile';
 
-export default function SocialScreen({ currentUserId }: Props) {
-  const insets = useSafeAreaInsets();
+export default function SocialScreen({ currentUserId, onBack }: Props) {
   const [view, setView] = useState<View_>('feed');
   const [following, setFollowing] = useState<FollowRow[]>([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
@@ -103,7 +101,7 @@ export default function SocialScreen({ currentUserId }: Props) {
     const isFollowed = followedIds.has(profileUser.id);
     return (
       <View style={styles.container}>
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <View style={styles.profileHeader}>
           <Pressable style={styles.backBtn} onPress={() => setView('feed')}>
             <Icon.ArrowLeft size={16} color="rgba(255,255,255,0.8)" />
             <Text style={styles.backBtnText}>Społeczność</Text>
@@ -183,14 +181,6 @@ export default function SocialScreen({ currentUserId }: Props) {
   // ── Main social view (feed + search) ────────────────────────────────────────
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <View style={styles.headerTitleRow}>
-          <Icon.Users size={18} color="#fff" />
-          <Text style={styles.headerTitle}>Społeczność</Text>
-        </View>
-        <Text style={styles.headerSub}>Obserwuj innych wędkarzy</Text>
-      </View>
-
       <View style={styles.tabs}>
         <TabBtn active={view === 'feed'} label={`Obserwowani (${following.length})`} onPress={() => setView('feed')} />
         <TabBtn active={view === 'search'} label="Szukaj" onPress={() => setView('search')} />
@@ -295,17 +285,17 @@ function TabBtn({ active, label, onPress }: { active: boolean; label: string; on
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F4F2EB' },
-  header: {
+  profileHeader: {
     backgroundColor: COLORS.brandDark,
     paddingHorizontal: 16,
+    paddingTop: 10,
     paddingBottom: 14,
-    gap: 4,
+    gap: 6,
   },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginBottom: 6 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
   backBtnText: { color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '600' },
-  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   profileHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
   headerSub: { color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '500' },
   tabs: {
     flexDirection: 'row',
