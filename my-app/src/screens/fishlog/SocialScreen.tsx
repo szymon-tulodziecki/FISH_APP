@@ -258,6 +258,23 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
   if (view === 'userProfile' && profileUser) {
     const isFollowed = followedIds.has(profileUser.id);
     const inProgress = followingInProgress.has(profileUser.id);
+
+    // Stats computed from profileCatches
+    const thisYear = new Date().getFullYear();
+    const withWeight = profileCatches.filter((c) => c.weight != null);
+    const heaviest = withWeight.length > 0 ? [...withWeight].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0] : null;
+    const speciesMap: Record<string, number> = {};
+    profileCatches.forEach((c) => { speciesMap[c.species] = (speciesMap[c.species] || 0) + 1; });
+    const topSpecies = Object.entries(speciesMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const prMap: Record<string, CatchRecord> = {};
+    withWeight.forEach((c) => {
+      if (!prMap[c.species] || (c.weight ?? 0) > (prMap[c.species].weight ?? 0)) prMap[c.species] = c;
+    });
+    const prs = Object.values(prMap).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0));
+    const thisYearCount = profileCatches.filter((c) => c.caught_at && new Date(c.caught_at).getFullYear() === thisYear).length;
+    const rated = profileCatches.filter((c) => c.rating);
+    const avgRating = rated.length ? (rated.reduce((s, c) => s + (c.rating ?? 0), 0) / rated.length).toFixed(1) : null;
+
     return (
       <View style={styles.container}>
         <View style={styles.subHeader}>
@@ -273,7 +290,7 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.subHeaderTitle}>{profileUser.username}</Text>
-              <Text style={styles.subHeaderSub}>{profileCatches.length} połowów</Text>
+              <Text style={styles.subHeaderSub}>{profileCatches.length} połowów · {Object.keys(speciesMap).length} gatunków</Text>
             </View>
             <TouchableOpacity
               style={[styles.followBtn, isFollowed && styles.followBtnActive]}
@@ -289,12 +306,82 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
             </TouchableOpacity>
           </View>
         </View>
+
         <ScrollView contentContainerStyle={styles.content}>
-          {loadingProfile
-            ? <ActivityIndicator color={COLORS.brandMid} style={{ marginTop: 32 }} />
-            : profileCatches.length === 0
-              ? <View style={styles.emptyCard}><Icon.Fish size={32} color={COLORS.borderSecondary} /><Text style={styles.emptyTitle}>Brak połowów</Text></View>
-              : profileCatches.map((c) => <CatchCard key={c.id} c={c} />)}
+          {loadingProfile ? (
+            <ActivityIndicator color={COLORS.brandMid} style={{ marginTop: 32 }} />
+          ) : profileCatches.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Icon.Fish size={32} color={COLORS.borderSecondary} />
+              <Text style={styles.emptyTitle}>Brak połowów</Text>
+            </View>
+          ) : (
+            <>
+              {/* Quick stats */}
+              <View style={styles.statsGrid}>
+                <StatTile label={`W ${thisYear} r.`} value={String(thisYearCount)} />
+                <StatTile label="Łącznie" value={String(profileCatches.length)} />
+                <StatTile label="Gatunki" value={String(Object.keys(speciesMap).length)} />
+                <StatTile label="Śr. ocena" value={avgRating ? `${avgRating}/5` : '—'} />
+              </View>
+
+              {/* Heaviest */}
+              {!!heaviest && (
+                <View style={styles.statCard}>
+                  <View style={styles.statCardTitle}>
+                    <Icon.Trophy size={15} color={COLORS.accentOrange} />
+                    <Text style={styles.statCardTitleText}>Najcięższa ryba</Text>
+                  </View>
+                  <Text style={styles.statCardHighlight}>{heaviest.species}</Text>
+                  <Text style={styles.statCardBig}>{heaviest.weight} kg</Text>
+                  {!!heaviest.length && <Text style={styles.muted}>{heaviest.length} cm · {formatDate(heaviest.caught_at)}</Text>}
+                </View>
+              )}
+
+              {/* PR per species */}
+              {prs.length > 0 && (
+                <View style={styles.statCard}>
+                  <View style={styles.statCardTitle}>
+                    <Icon.Trophy size={15} color={COLORS.brandMid} />
+                    <Text style={styles.statCardTitleText}>Rekordy osobiste</Text>
+                  </View>
+                  {prs.map((c) => (
+                    <View key={c.species} style={styles.prRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.prSpecies}>{c.species}</Text>
+                        {!!c.location && <Text style={styles.muted}>{c.location}</Text>}
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.prWeight}>{c.weight} kg</Text>
+                        {!!c.length && <Text style={styles.muted}>{c.length} cm</Text>}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Top species */}
+              {topSpecies.length > 0 && (
+                <View style={styles.statCard}>
+                  <View style={styles.statCardTitle}>
+                    <Icon.Fish size={15} color={COLORS.brandDark} />
+                    <Text style={styles.statCardTitleText}>Najczęściej łowione</Text>
+                  </View>
+                  {topSpecies.map(([species, count], i) => (
+                    <View key={species} style={styles.topRow}>
+                      <Text style={styles.rank}>{i + 1}</Text>
+                      <Text style={[styles.prSpecies, { flex: 1 }]}>{species}</Text>
+                      <Text style={styles.muted}>{count}×</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Catch list */}
+              <Text style={styles.sectionLabel}>Połowy</Text>
+              {profileCatches.map((c) => <CatchCard key={c.id} c={c} />)}
+            </>
+          )}
         </ScrollView>
       </View>
     );
@@ -547,6 +634,15 @@ export default function SocialScreen({ currentUserId, currentUsername }: Props) 
   );
 }
 
+function StatTile({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.statTile}>
+      <Text style={styles.statTileValue}>{value}</Text>
+      <Text style={styles.statTileLabel}>{label}</Text>
+    </View>
+  );
+}
+
 function CatchCard({ c }: { c: CatchRecord }) {
   return (
     <View style={styles.card}>
@@ -698,4 +794,33 @@ const styles = StyleSheet.create({
     borderColor: '#E8E6DD', padding: 36, alignItems: 'center', gap: 10, marginTop: 8,
   },
   emptyTitle: { color: COLORS.textPrimary, fontWeight: '700', fontSize: 15, textAlign: 'center' },
+  // User profile stats
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  statTile: {
+    flex: 1, minWidth: '22%', backgroundColor: '#fff',
+    borderRadius: 12, borderWidth: 1, borderColor: '#E8E6DD',
+    padding: 10, alignItems: 'center', gap: 2,
+  },
+  statTileValue: { fontSize: 18, fontWeight: '800', color: COLORS.brandDark, letterSpacing: -0.5 },
+  statTileLabel: { fontSize: 10, color: COLORS.textTertiary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3, textAlign: 'center' },
+  statCard: {
+    backgroundColor: '#fff', borderRadius: 14, borderWidth: 1,
+    borderColor: '#E8E6DD', padding: 14, gap: 10,
+  },
+  statCardTitle: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statCardTitleText: { fontSize: 14, fontWeight: '800', color: COLORS.brandDark },
+  statCardHighlight: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  statCardBig: { fontSize: 26, fontWeight: '800', color: COLORS.brandMid, letterSpacing: -0.5 },
+  prRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#F7F5EE', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+  },
+  prSpecies: { fontWeight: '700', color: COLORS.textPrimary, fontSize: 13 },
+  prWeight: { fontWeight: '800', color: COLORS.brandMid, fontSize: 15 },
+  topRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#F7F5EE', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+  },
+  rank: { width: 18, textAlign: 'center', fontWeight: '800', color: COLORS.textTertiary, fontSize: 12 },
+  sectionLabel: { fontSize: 14, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3, marginTop: 4 },
 });
