@@ -31,4 +31,5 @@ export const Icon = {
   ),
   MessageCircle: ({ size = 16, color = '#000' }: IconProps) => <Feather name="message-circle" size={size} color={color} />,
   Send: ({ size = 16, color = '#000' }: IconProps) => <Feather name="send" size={size} color={color} />,
+  User: ({ size = 16, color = '#000' }: IconProps) => <Feather name="user" size={size} color={color} />,
 };
