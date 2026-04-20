@@ -9,11 +9,12 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import AddCatchScreen from '@/screens/fishlog/AddCatchScreen';
 import AuthScreen from '@/screens/fishlog/AuthScreen';
 import CatchDetailScreen from '@/screens/fishlog/CatchDetailScreen';
+import SocialScreen from '@/screens/fishlog/SocialScreen';
 import StatsScreen from '@/screens/fishlog/StatsScreen';
 import { useFishlogStore } from '@/store/useFishlogStore';
 import { COLORS, STATUS_LABELS } from '@/utils/fishlog-constants';
 
-type Screen = 'list' | 'add' | 'edit' | 'detail' | 'stats';
+type Screen = 'list' | 'add' | 'edit' | 'detail' | 'stats' | 'social';
 
 export default function FishLogApp() {
   if (!isSupabaseConfigured) {
@@ -105,6 +106,7 @@ export default function FishLogApp() {
   }
 
   if (screen === 'stats') return <StatsScreen catches={catches} onBack={() => setScreen('list')} />;
+  if (screen === 'social') return <SocialScreen currentUserId={currentUser.id} />;
 
   const thisYear = new Date().getFullYear();
   const caughtThisYear = catches.filter(
@@ -136,6 +138,7 @@ export default function FishLogApp() {
       <View style={styles.tabs}>
         <TabButton active={screen === 'list'} label="Połowy" onPress={() => setScreen('list')} />
         <TabButton active={screen === 'stats'} label="Statystyki" onPress={() => setScreen('stats')} />
+        <TabButton active={screen === 'social'} label="Społeczność" onPress={() => setScreen('social')} />
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
