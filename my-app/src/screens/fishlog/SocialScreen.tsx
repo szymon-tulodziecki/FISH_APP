@@ -43,14 +43,34 @@ export default function SocialScreen({ currentUserId, onBack }: Props) {
 
   const loadFollowing = async () => {
     setLoadingFeed(true);
-    const { data } = await supabase
+    const { data: followData } = await supabase
       .from('user_follows')
-      .select('following_id, profiles!user_follows_following_id_fkey(id, username)')
+      .select('following_id, created_at')
       .eq('follower_id', currentUserId)
       .order('created_at', { ascending: false });
-    const rows = (data ?? []) as any[];
-    setFollowing(rows.map((r) => ({ following_id: r.following_id, profiles: r.profiles })));
-    setFollowedIds(new Set(rows.map((r) => r.following_id)));
+
+    const follows = (followData ?? []) as { following_id: string; created_at: string }[];
+    const ids = follows.map((r) => r.following_id);
+    setFollowedIds(new Set(ids));
+
+    if (ids.length === 0) {
+      setFollowing([]);
+      setLoadingFeed(false);
+      return;
+    }
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', ids);
+
+    const profileMap: Record<string, Profile> = {};
+    ((profileData ?? []) as Profile[]).forEach((p) => { profileMap[p.id] = p; });
+
+    setFollowing(follows.map((r) => ({
+      following_id: r.following_id,
+      profiles: profileMap[r.following_id] ?? { id: r.following_id, username: r.following_id.slice(0, 8) },
+    })));
     setLoadingFeed(false);
   };
 
